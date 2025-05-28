@@ -1,0 +1,33 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VSCode settings
+.vscode/
+
+# Logs
+*.log
+
+# Test reports
+.pytest_cache/
+nosetests.xml
+test-results.xml
+
+# dotenv
+.env
+.env.*
+
+# SQLite DB
+*.sqlite3
+
+# Alembic
+alembic.ini
