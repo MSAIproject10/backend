@@ -1,25 +1,29 @@
-import requests
 import os
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-AZURE_MAPS_SUBSCRIPTION_KEY = os.getenv("AZURE_MAPS_KEY")
+KAKAO_REST_API_KEY = os.getenv("KAKAO_API_KEY")
 
 def geocode_address(address: str):
-    url = "https://atlas.microsoft.com/search/address/json"
-    params = {
-        "subscription-key": AZURE_MAPS_SUBSCRIPTION_KEY,
-        "api-version": "1.0",
-        "query": address
+    url = "https://dapi.kakao.com/v2/local/search/address.json"
+    headers = {
+        "Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"
     }
+    params = {"query": address}
     try:
-        response = requests.get(url, params=params, timeout=5)
+        response = requests.get(url, headers=headers, params=params, timeout=5)
         response.raise_for_status()
-        result = response.json()
-        if result.get("results"):
-            pos = result["results"][0]["position"]
-            return address, pos["lat"], pos["lon"]
-    except:
-        pass
+        data = response.json()
+
+        if data.get("documents"):
+            doc = data["documents"][0]
+            return address, float(doc["y"]), float(doc["x"])  # lat, lon
+
+    except Exception as e:
+        print("❌ 에러 발생:", e)
+        if 'response' in locals():
+            print("❌ 응답 내용:", response.text)
+
     return address, None, None
 

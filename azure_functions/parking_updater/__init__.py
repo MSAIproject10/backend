@@ -2,9 +2,9 @@
 import datetime
 import logging
 import azure.functions as func
-from shared.services.updater import run_update  # Shared logic import
+from shared.services.updater import run_update # Shared logic import
 
 def main(mytimer: func.TimerRequest) -> None:
-    utc_timestamp = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
+    utc_timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     logging.info(f"[parking_updater] Function triggered at {utc_timestamp}")
     run_update()

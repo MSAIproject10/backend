@@ -5,14 +5,13 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from shared.db import get_db
 from app.models.schemas.user import UserCreate, UserResponse, User
 from app.crud import user_crud
-
 from dotenv import load_dotenv
 import os
-
 load_dotenv()
 
 # 환경변수

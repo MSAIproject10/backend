@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
 API_KEY = os.getenv("SEOUL_API_KEY")  # .env에서 로드
 
 def fetch_parking_info(start=1, end=1000) -> List[Dict[str, Any]]:
@@ -17,9 +16,10 @@ def fetch_parking_info(start=1, end=1000) -> List[Dict[str, Any]]:
         response.raise_for_status()
 
         data = response.json()
-        
+        print(data)
         return data.get("GetParkingInfo", {}).get("row", [])
     except Exception as e:
         print(f"[{datetime.now()}] Error fetching parking info: {e}")
         return []
 
+# fetch_parking_info()
