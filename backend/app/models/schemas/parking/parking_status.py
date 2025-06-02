@@ -1,5 +1,5 @@
 # models/schemas/parking_status.py
-from sqlalchemy import Column, Integer, TIMESTAMP, Unicode, ForeignKey
+from sqlalchemy import Column, Integer, Unicode, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from shared.db import Base
 
@@ -11,7 +11,10 @@ class ParkingStatus(Base):
     parking_id = Column(Integer, ForeignKey("parking.id"))
 
     current_occupancy = Column(Integer) # 현재 주차 차량 수(305)
-    last_updated = Column(TIMESTAMP) # 현재 주차 차량 수 업데이트 시간(2025-05-27  9:26:30 PM)
-    congestion_level = Column(Unicode(10))  # 혼잡도 
+    last_updated = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+    congestion_level = Column(Unicode(5))  # 혼잡도 
+
+    entry_count = Column(Integer)     # 입차대수
+    exit_count = Column(Integer)      # 출차대수
 
     parking = relationship("Parking", back_populates="status")

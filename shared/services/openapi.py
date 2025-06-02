@@ -16,7 +16,7 @@ def fetch_parking_info(start=1, end=1000) -> List[Dict[str, Any]]:
         response.raise_for_status()
 
         data = response.json()
-        print(data)
+        # print(data)
         return data.get("GetParkingInfo", {}).get("row", [])
     except Exception as e:
         print(f"[{datetime.now()}] Error fetching parking info: {e}")

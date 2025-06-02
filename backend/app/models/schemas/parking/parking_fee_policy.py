@@ -1,5 +1,5 @@
 # models/schemas/parking_fee_policy.py
-from sqlalchemy import Column, Integer, Unicode, ForeignKey
+from sqlalchemy import Column, Integer, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from shared.db import Base
 
@@ -20,8 +20,8 @@ class ParkingFeePolicy(Base):
 
     daily_max_fee = Column(Integer) # 일 최대 요금(30900)
 
-    weekday_pay_type = Column(Unicode(10)) # 유무료 구분명(유료, 무료)
-    saturday_pay_type = Column(Unicode(10)) # 토요일 유/무료(유료, 무료)
-    holiday_pay_type = Column(Unicode(10)) # 공휴일 유/무료(유료, 무료)
+    weekday_pay_type = Column(Boolean, nullable=False, default=True)   # True = 유료, False = 무료
+    saturday_pay_type = Column(Boolean, nullable=False, default=True)
+    holiday_pay_type = Column(Boolean, nullable=False, default=True)
 
     parking = relationship("Parking", back_populates="fee_policy")

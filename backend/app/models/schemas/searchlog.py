@@ -1,5 +1,5 @@
 # models/schemas/search.py
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Unicode, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from shared.db import Base
 
@@ -10,5 +10,5 @@ class SearchLog(Base):
 
     uid = Column(Integer, ForeignKey("user_table.uid", ondelete="SET NULL"), nullable=True) # 로그인하여 검색한 사용자
 
-    keyword = Column(String(100), nullable=False) # 사용자가 검색한 키워드
+    keyword = Column(Unicode(30), nullable=False) # 사용자가 검색한 키워드
     searched_at = Column(DateTime, default=func.now()) # 사용자가 검색한 시간
