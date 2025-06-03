@@ -1,4 +1,4 @@
-# models/schemas/car.py
+# models/schemas/vehicle.py
 from sqlalchemy import Column, Integer, Unicode, Boolean, ForeignKey
 from shared.db import Base
 
@@ -14,3 +14,4 @@ class Vehicle(Base):
     mileage_km = Column(Integer) # 주행 거리
     is_commercial = Column(Boolean) # 회사용/자가용
     vehicle_type = Column(Unicode(15)) # 차종(경차, SUV, 전기차 등)
+    default_type = Column(Boolean, nullable=False, default=False) # 기본 차량으로 지정되어 있는지 

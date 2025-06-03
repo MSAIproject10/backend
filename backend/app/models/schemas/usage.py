@@ -1,5 +1,5 @@
 # models/schemas/usage.py
-from sqlalchemy import Column, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean, Unicode
 from sqlalchemy.sql import func
 from shared.db import Base
 
@@ -10,9 +10,15 @@ class Usage(Base):
 
     # parking_usage_table
     uid = Column(Integer, ForeignKey("user_table.uid", ondelete="CASCADE"))  # 사용자 삭제 시 사용기록도 삭제
+    
     vehicle_id = Column(Integer, ForeignKey("vehicle_table.vehicle_id", ondelete="SET NULL"), nullable=True)
     parking_id = Column(Integer, ForeignKey("parking.id", ondelete="SET NULL"), nullable=True)
     
-    entry_time = Column(DateTime, nullable=False) # 입차 시간
-    exit_time = Column(DateTime, nullable=False) # 출차 시간
-    total_fee = Column(Integer, nullable=False) # 사용 요금
+    ocr_detected = Column(Unicode(15), nullable=True)  # OCR로 인식한 번호판
+    is_verified = Column(Boolean, default=False, nullable=False)  # OCR과 일치 여부
+
+    entry_time = Column(DateTime, nullable=True) # 입차 시간
+    exit_time = Column(DateTime, nullable=True) # 출차 시간
+    
+    total_fee = Column(Integer, nullable=True) # 사용 요금
+    fee_status = Column(Boolean, default=False, nullable=False) # 정산 여부 

@@ -2,6 +2,10 @@
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, Float, Boolean
 from sqlalchemy.orm import relationship
 from shared.db import Base
+from pydantic import BaseModel
+from typing import Optional
+from .parking_status import ParkingStatusResponse
+from .parking_fee_policy import ParkingFeeResponse
 
 class Parking(Base):
     __tablename__ = "parking"
@@ -25,9 +29,38 @@ class Parking(Base):
     status = relationship("ParkingStatus", back_populates="parking", uselist=False)
     fee_policy = relationship("ParkingFeePolicy", back_populates="parking", uselist=False)
     schedule_policy = relationship("ParkingSchedulePolicy", back_populates="parking", uselist=False)
+    user = relationship("User", back_populates="parking") # 하나의 유저당, 여러개의 주차장 가능 
 
+# Parking 응답용
+class ParkingResponse(BaseModel):
+    id: int
+    parking_name: str
+    address: str
+    operation_type : str
+    total_capacity: Optional[int]
+    latitude : float
+    longitude : float
 
+    fee : Optional[ParkingFeeResponse]
+    status: Optional[ParkingStatusResponse]
 
+    class Config:
+        orm_mode = True
+
+class ParkingSimple(BaseModel):
+    id: int
+    parking_name: str
+    address: str
+    operation_type : str
+    total_capacity: Optional[int]
+    latitude : float
+    longitude : float
+
+    fee : Optional[ParkingFeeResponse]
+    status: Optional[ParkingStatusResponse]
+
+    class Config:
+        orm_mode = True
 
 
 

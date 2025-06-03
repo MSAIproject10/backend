@@ -1,7 +1,9 @@
 # models/schemas/parking_status.py
+from typing import Optional
 from sqlalchemy import Column, Integer, Unicode, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from shared.db import Base
+from pydantic import BaseModel
 
 class ParkingStatus(Base):
     __tablename__ = "parking_status"
@@ -18,3 +20,10 @@ class ParkingStatus(Base):
     exit_count = Column(Integer)      # 출차대수
 
     parking = relationship("Parking", back_populates="status")
+
+
+class ParkingStatusResponse(BaseModel):
+    current_occupancy: Optional[int]
+    congestion_level: Optional[str]
+    class Config:
+        orm_mode = True

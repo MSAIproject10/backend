@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sqlalchemy.orm import Session
 from shared.db import get_db
-from backend.app.models.schemas.parking import Parking, ParkingFeePolicy, ParkingSchedulePolicy
+from backend.app.models.schemas.parking import Parking, ParkingFeePolicy, ParkingSchedulePolicy, ParkingStatus
 from shared.services.openapi import fetch_parking_info
 from shared.services.geocode import geocode_address
 
@@ -24,57 +24,64 @@ def normalize_time(value):
     
 def parse_pay_type(value: str) -> bool:
     return str(value).strip() == "유료"
-    
+
+# 엑셀파일입력으로 사설 주차장 등록(일반화)
 def insert_dummy_ocr_parking(db: Session):
-    addr = "서울특별시 용산구 청파로 378"
-    _, lat, lon = geocode_address(addr)  
-    dummy_parking = Parking(
-        external_id="DUMMY001",
-        parking_name="서울역 철도 KTX빌딩 민영 주차장",
-        address=addr,
-        parking_type="노외 주차장",
-        phone_number="010-0000-0000",
+    csv_path='../file/private_parking.csv'
+    logger.info(f"CSV 파일에서 더미 주차장 데이터 로딩: {csv_path}")
+    df = pd.read_csv(csv_path)
+    for idx, row in df.iterrows():
+        try:
+            addr = row["address"]
+            _, lat, lon = geocode_address(addr)
+            parking = Parking(
+                external_id=row["external_id"],
+                parking_name=row["parking_name"],
+                address=addr,
+                parking_type=row["parking_type"],
+                phone_number=row["phone_number"],
+                latitude=lat, # 경도
+                longitude=lon, # 위도 
+                operation_type=row["operation_type"],
+                provide_status=True,
+                total_capacity=int(row["total_capacity"]),
+                ocr_linked=True
+            )
+            db.add(parking)
+            db.flush()
 
-        latitude=lat,
-        longitude=lon,
+            dummy_fee = ParkingFeePolicy(
+                parking_id=parking.id,
+                monthly_fee=row["monthly_fee"],
+                base_fee=row["base_fee"],
+                base_time_min=row["base_time_min"],
+                extra_fee=row["extra_fee"],
+                extra_time_min=row["extra_time_min"],
+                daily_max_fee=row["daily_max_fee"],
+                weekday_pay_type=row["weekday_pay_type"],
+                saturday_pay_type=row["saturday_pay_type"],
+                holiday_pay_type=row["holiday_pay_type"],
+            )
+            db.add(dummy_fee)
 
-        operation_type="시간제 주차장",
-        provide_status=True,
-        total_capacity=114,
-        ocr_linked=True  
-    )
-    db.add(dummy_parking)
-    db.flush()
-
-    dummy_fee = ParkingFeePolicy(
-        parking_id=dummy_parking.id,
-        monthly_fee=-1,
-        base_fee=2400,
-        base_time_min=30,
-        extra_fee=800,
-        extra_time_min=10,
-        daily_max_fee=-1,
-        weekday_pay_type=True,
-        saturday_pay_type=True,
-        holiday_pay_type=False
-    )
-    db.add(dummy_fee)
-
-    dummy_schedule = ParkingSchedulePolicy(
-        parking_id=dummy_parking.id,
-        weekday_open="0000",
-        weekday_close="2400",
-        weekend_open="0000",
-        weekend_close="2400",
-        holiday_open="0000",
-        holiday_close="2400"
-    )
-    db.add(dummy_schedule)
+            dummy_schedule = ParkingSchedulePolicy(
+                parking_id=parking.id,
+                weekday_open=row["weekday_open"],
+                weekday_close=row["weekday_close"],
+                weekend_open=row["weekend_open"],
+                weekend_close=row["weekend_close"],
+                holiday_open=row["holiday_open"],
+                holiday_close=row["holiday_close"],
+            )
+            db.add(dummy_schedule)
+        except Exception as e:
+            logger.error("e")
 
 def run_collect():
     logger.info("주차장 데이터 수집 시작")
     db: Session = next(get_db())
 
+    db.query(ParkingStatus).delete() # Parking Status는 참조 관계이므로 미리 삭제해야함
     db.query(ParkingSchedulePolicy).delete()
     db.query(ParkingFeePolicy).delete()
     db.query(Parking).delete()
@@ -159,7 +166,4 @@ def run_collect():
     insert_dummy_ocr_parking(db)
     db.commit()
     logger.info("주차장 데이터 커밋 완료 ✅")
-
-run_ingest()
-
-
+run_collect()

@@ -53,15 +53,15 @@ def run_update():
             Parking.provide_status == True
         )
     ).all()
+    logger.info(f"DB에서 매칭된 주차장 수: {len(parkings)}")
 
-    dummy_parking = db.query(Parking).filter(Parking.external_id == "DUMMY001").first()
-    if dummy_parking:
-        parkings.append(dummy_parking)
-        logger.info(dummy_parking.ocr_linked)
-        logger.info("DUMMY 주차장 강제 추가됨 ✅")
+    dummy_parkings = db.query(Parking).filter(Parking.external_id.like("DUMMY%")).all() # DUMMY로 시작하는 데이터들 가져오기 
+    
+    if dummy_parkings:
+        parkings.extend(dummy_parkings)
+        logger.info("DUMMY 주차장 추가됨 ✅")
 
-    logger.info(f"🔍 DB에서 매칭된 주차장 수: {len(parkings)}")
-
+    logger.info(f"추가된 주차장 수: {len(parkings)}")
     for idx, parking in enumerate(parkings):
         logger.info(f"🔁 Processing [{idx + 1}/{len(parkings)}] {parking.parking_name} (external_id={parking.external_id})")
 
@@ -72,18 +72,18 @@ def run_update():
             logger.warning(f"⚠️ API 데이터 없음, OCR 연동도 안됨 → skip: {pklt_cd}")
             continue
         try:
-            df = parking.ocr_linked
             if parking.ocr_linked:
                 logger.info(f"[DEBUG] {parking.parking_name}는 ocr_linked=True 입니다.")
-                now_cnt = fetch_capacity()
+                dummy_id = int(parking.external_id.replace("DUMMY", ""))
+                now_cnt = fetch_capacity(dummy_id)
                 logger.info(f"[DEBUG] fetch_capacity() = {now_cnt}")
-                entry, exit = fetch_entry_exit()
+                entry, exit = fetch_entry_exit(dummy_id)
                 logger.info(f"[DEBUG] fetch_entry_exit() = {entry}, {exit}")
                 logger.info(f"↙️ {parking.parking_name}: OCR 연동됨 → 남은 주차면수 = {now_cnt}")
             else:
                 now_cnt = int(float(item.get("NOW_PRK_VHCL_CNT", 0.0)))
                 entry, exit = -1, -1
-                # logger.info(f"📡 {parking.parking_name}: 공공API → 현재 주차 차량 수 = {now_cnt}")
+                # logger.info(f"❇️{parking.parking_name}: 공공API → 현재 주차 차량 수 = {now_cnt}")
 
             total_cnt = parking.total_capacity
 
@@ -93,7 +93,7 @@ def run_update():
 
             occupancy = now_cnt / total_cnt
             status_text = get_status_text(occupancy)
-            # logger.info(f"🧾 {parking.parking_name}: 총 주차면={parking.total_capacity}, 남은 주차면={now_cnt},혼잡도={status_text}, 입차={entry}, 출차={exit}")
+            logger.info(f"{parking.parking_name}: 총 주차면={parking.total_capacity}, 남은 주차면={now_cnt},혼잡도={status_text}, 입차={entry}, 출차={exit}")
 
             occ = ParkingStatus(
                 parking_id=parking.id,

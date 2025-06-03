@@ -1,4 +1,4 @@
-# models/schemas/search.py
+# models/schemas/searchlog.py
 from sqlalchemy import Column, Integer, Unicode, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from shared.db import Base
