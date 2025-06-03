@@ -1,6 +1,8 @@
 # models/schemas/vehicle.py
 from sqlalchemy import Column, Integer, Unicode, Boolean, ForeignKey
 from shared.db import Base
+from pydantic import BaseModel
+from typing import Optional
 
 class Vehicle(Base):
     __tablename__ = "vehicle_table"
@@ -15,3 +17,26 @@ class Vehicle(Base):
     is_commercial = Column(Boolean) # 회사용/자가용
     vehicle_type = Column(Unicode(15)) # 차종(경차, SUV, 전기차 등)
     default_type = Column(Boolean, nullable=False, default=False) # 기본 차량으로 지정되어 있는지 
+
+class VehicleCreate(BaseModel):
+    uid: Optional[int]
+
+    license_plate: str
+    vehicle_year: Optional[int]
+    mileage_km: Optional[int]
+    is_commercial: Optional[bool]
+    vehicle_type: Optional[str]
+    default_type: Optional[bool] = False
+
+class VehicleResponse(BaseModel):
+    vehicle_id: int
+    uid: Optional[int]
+    
+    license_plate: str
+    vehicle_year: Optional[int]
+    mileage_km: Optional[int]
+    is_commercial: Optional[bool]
+    vehicle_type: Optional[str]
+    default_type: bool
+    class Config:
+        orm_mode = True

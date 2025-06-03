@@ -1,4 +1,7 @@
 # models/schemas/usage.py
+import datetime
+from typing import Optional
+from pydantic import BaseModel
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean, Unicode
 from sqlalchemy.sql import func
 from shared.db import Base
@@ -22,3 +25,19 @@ class Usage(Base):
     
     total_fee = Column(Integer, nullable=True) # 사용 요금
     fee_status = Column(Boolean, default=False, nullable=False) # 정산 여부 
+
+class CreateUsageRequest(BaseModel):
+    uid: int
+    vehicle_id: int
+    parking_id: int
+    entry_time: datetime
+    ocr_detected: Optional[str] = None
+
+class UsageResponse(BaseModel):
+    usage_id: int
+    parking_id: int
+    entry_time: datetime
+    exit_time: Optional[datetime]
+    total_fee: Optional[int]
+    class Config:
+        orm_mode = True

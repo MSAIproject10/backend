@@ -40,8 +40,8 @@ def insert_dummy_ocr_parking(db: Session):
                 address=addr,
                 parking_type=row["parking_type"],
                 phone_number=row["phone_number"],
-                latitude=lat, # 경도
-                longitude=lon, # 위도 
+                latitude=lat, # 위도
+                longitude=lon, # 경도
                 operation_type=row["operation_type"],
                 provide_status=True,
                 total_capacity=int(row["total_capacity"]),

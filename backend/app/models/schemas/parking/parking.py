@@ -50,15 +50,10 @@ class ParkingResponse(BaseModel):
 class ParkingSimple(BaseModel):
     id: int
     parking_name: str
-    address: str
-    operation_type : str
     total_capacity: Optional[int]
     latitude : float
     longitude : float
-
-    fee : Optional[ParkingFeeResponse]
     status: Optional[ParkingStatusResponse]
-
     class Config:
         orm_mode = True
 
