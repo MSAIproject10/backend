@@ -166,4 +166,5 @@ def run_collect():
     insert_dummy_ocr_parking(db)
     db.commit()
     logger.info("주차장 데이터 커밋 완료 ✅")
-run_collect()
+
+# run_collect()

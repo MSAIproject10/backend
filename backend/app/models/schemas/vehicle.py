@@ -16,22 +16,29 @@ class Vehicle(Base):
     mileage_km = Column(Integer) # 주행 거리
     is_commercial = Column(Boolean) # 회사용/자가용
     vehicle_type = Column(Unicode(15)) # 차종(경차, SUV, 전기차 등)
+    
     default_type = Column(Boolean, nullable=False, default=False) # 기본 차량으로 지정되어 있는지 
 
 class VehicleCreate(BaseModel):
     uid: Optional[int]
-
+    
     license_plate: str
     vehicle_year: Optional[int]
     mileage_km: Optional[int]
     is_commercial: Optional[bool]
     vehicle_type: Optional[str]
-    default_type: Optional[bool] = False
+
+class VehicleUpdate(BaseModel):
+    license_plate: Optional[str] = None
+    vehicle_year: Optional[int] = None
+    mileage_km: Optional[int] = None
+    is_commercial: Optional[bool] = None
+    vehicle_type: Optional[str] = None
+    default_type: Optional[bool] = None 
 
 class VehicleResponse(BaseModel):
     vehicle_id: int
-    uid: Optional[int]
-    
+
     license_plate: str
     vehicle_year: Optional[int]
     mileage_km: Optional[int]

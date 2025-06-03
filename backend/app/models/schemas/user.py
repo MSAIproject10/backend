@@ -21,6 +21,7 @@ class User(Base):
     favorite_parking = Column(Integer, ForeignKey("parking.id")) # 자주 이용하는 주차장
     
     parking = relationship("Parking", back_populates="user") # SQLAlchemy에서 객체 간 연결을 자동화, 하나의 주차장당 여러 유저 가능 
+    favorite_parking = relationship("FavoriteParking", back_populates="user", cascade="all, delete")
 
 class UserCreate(BaseModel):
     username: str

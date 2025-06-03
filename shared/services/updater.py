@@ -111,4 +111,4 @@ def run_update():
     db.commit()
     logger.info(f"✅ 업데이트 완료: {datetime.now()}")
 
-run_update()
+# run_update()

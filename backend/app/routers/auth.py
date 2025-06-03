@@ -91,6 +91,3 @@ def logout():
     # JWT 기반은 서버 상태가 없음 → 클라이언트에서 토큰 삭제 필요
     return {"message": "Logout successful. Please delete token on client side."}
 
-@router.get("/me", response_model=UserResponse) # response_mode : 사용자에게 적절히 변환하여 응답
-def get_me(current_user = Depends(get_current_user)):
-    return current_user

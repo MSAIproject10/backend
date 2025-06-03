@@ -38,10 +38,10 @@ class ParkingResponse(BaseModel):
     address: str
     operation_type : str
     total_capacity: Optional[int]
-    latitude : float
-    longitude : float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
-    fee : Optional[ParkingFeeResponse]
+    fee_policy : Optional[ParkingFeeResponse]
     status: Optional[ParkingStatusResponse]
 
     class Config:
