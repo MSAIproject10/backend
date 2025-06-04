@@ -26,4 +26,4 @@ class ParkingStatusResponse(BaseModel):
     current_occupancy: Optional[int]
     congestion_level: Optional[str]
     class Config:
-        orm_mode = True
+        from_attributes = True 

@@ -16,8 +16,12 @@ def create_vehicle(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    existing_plate = db.query(Vehicle).filter(Vehicle.license_plate == data.license_plate).first()
+    if existing_plate:
+        raise HTTPException(status_code=409, detail="This is a registered vehicle number.")
+
     existing_vehicles = db.query(Vehicle).filter(Vehicle.uid == current_user.uid).all() # 사용자 자동차 목록 가져오기 
-    is_default = data.default_type
+    is_default = False
     if len(existing_vehicles) == 0:
         is_default = True
     vehicle = Vehicle(

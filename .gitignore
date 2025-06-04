@@ -31,3 +31,4 @@ test-results.xml
 
 # Alembic
 alembic.ini
+backend/alembic/

@@ -30,4 +30,4 @@ class ParkingFeeResponse(BaseModel):
     base_fee : Optional[int]
     base_time_min: Optional[int]
     class Config:
-        orm_mode = True
+        from_attributes = True 

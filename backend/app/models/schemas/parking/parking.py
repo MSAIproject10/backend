@@ -1,5 +1,5 @@
 # models/schemas/parking.py
-from sqlalchemy import Column, Integer, Unicode, UnicodeText, Float, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, Unicode, UnicodeText, Float, Boolean
 from sqlalchemy.orm import relationship
 from shared.db import Base
 from pydantic import BaseModel
@@ -11,8 +11,8 @@ class Parking(Base):
     __tablename__ = "parking"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-
     external_id = Column(Unicode(10))  # 주차장 외부 ID
+
     parking_name = Column(Unicode(50))  # 한글 주차장명
     address = Column(UnicodeText)        # 한글 주소
     parking_type = Column(Unicode(10))   # 노상/노외
@@ -29,7 +29,6 @@ class Parking(Base):
     status = relationship("ParkingStatus", back_populates="parking", uselist=False)
     fee_policy = relationship("ParkingFeePolicy", back_populates="parking", uselist=False)
     schedule_policy = relationship("ParkingSchedulePolicy", back_populates="parking", uselist=False)
-    user = relationship("User", back_populates="parking") # 하나의 유저당, 여러개의 주차장 가능 
 
 # Parking 응답용
 class ParkingResponse(BaseModel):
@@ -45,17 +44,18 @@ class ParkingResponse(BaseModel):
     status: Optional[ParkingStatusResponse]
 
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 class ParkingSimple(BaseModel):
     id: int
     parking_name: str
     total_capacity: Optional[int]
-    latitude : float
-    longitude : float
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    
     status: Optional[ParkingStatusResponse]
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 
 

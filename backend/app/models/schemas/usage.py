@@ -31,7 +31,7 @@ class UsageResponse(BaseModel):
     exit_time: Optional[datetime]
     total_fee: Optional[int]
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 class DetectedResult(BaseModel):
     vehicle_id: int
