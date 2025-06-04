@@ -11,7 +11,7 @@ class Parking(Base):
     __tablename__ = "parking"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    external_id = Column(Unicode(10))  # 주차장 외부 ID
+    external_id = Column(Unicode(10), unique=True, nullable=False)   # 주차장 외부 ID
 
     parking_name = Column(Unicode(50))  # 한글 주차장명
     address = Column(UnicodeText)        # 한글 주소

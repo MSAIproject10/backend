@@ -13,7 +13,7 @@ class Usage(Base):
 
     uid = Column(Integer, ForeignKey("user_table.uid", ondelete="CASCADE"))  # 사용자 삭제 시 사용기록도 삭제
     vehicle_id = Column(Integer, ForeignKey("vehicle_table.vehicle_id", ondelete="SET NULL"), nullable=True)
-    parking_id = Column(Integer, ForeignKey("parking.id", ondelete="SET NULL"), nullable=True)
+    external_id = Column(Unicode(10), ForeignKey("parking.external_id", ondelete="SET NULL"), nullable=True)
     
     ocr_detected = Column(Unicode(15), nullable=True)  # OCR로 인식한 번호판(확장시 사용)
     is_verified = Column(Boolean, default=False, nullable=False)  # OCR과 일치 여부(확장시 사용)
@@ -37,4 +37,4 @@ class DetectedResult(BaseModel):
     vehicle_id: int
     parking_id: str  
     entry_time: datetime
-    log_id : str # 입력 및 응답용 모델(Pydantic) 이기 때문에 log_id 추가 가능
+    log_id : int # 입력 및 응답용 모델(Pydantic) 이기 때문에 log_id 추가 가능

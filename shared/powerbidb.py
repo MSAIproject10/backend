@@ -76,38 +76,35 @@ def fetch_entry_exit(parking_log_id: int) -> tuple[int, int]:
 
 # ID를 인자로 받아 해당 레코드의 남은 주차 면적 수를 반환(parking table용)
 def fetch_capacity(parking_log_id: int) -> int:
-    db = SessionLocal()
-    try:
-        # ===========주차장을 식별할 수 있는 필드가 PowerBIDB에 존재할 경우 ===========
-        # result = db.execute(
-        #     text("""
-        #         SELECT 
-        #             CAST([남은주차면적수] AS INT) AS capacity
-        #         FROM dbo.ParkingLog
-        #         WHERE ID = :id
-        #     """),
-        #     {"id": parking_log_id}
-        # ).fetchone()
-        result = db.execute(
-            text("""
-                SELECT TOP 1
-                    CAST([남은주차면적수] AS INT) AS capacity
-                FROM dbo.ParkingLog
-                ORDER BY [입차시간] DESC
-            """)
-        ).fetchone()
+    with SessionLocal() as db:
+        try:
+            # ===========주차장을 식별할 수 있는 필드가 PowerBIDB에 존재할 경우 ===========
+            # result = db.execute(
+            #     text("""
+            #         SELECT 
+            #             CAST([남은주차면적수] AS INT) AS capacity
+            #         FROM dbo.ParkingLog
+            #         WHERE ID = :id
+            #     """),
+            #     {"id": parking_log_id}
+            # ).fetchone()
+            result = db.execute(
+                text("""
+                    SELECT TOP 1
+                        CAST([남은주차면적수] AS INT) AS capacity
+                    FROM dbo.ParkingLog
+                    ORDER BY [입차시간] DESC
+                """)
+            ).fetchone()
 
-        if result:
-            return int(result.capacity)
-        else:
+            if result:
+                return int(result.capacity)
+            else:
+                return -1
+
+        except Exception as e:
+            print(f"[ERROR] fetch_capacity 실패: {e}")
             return -1
-
-    except Exception as e:
-        print(f"[ERROR] fetch_capacity 실패: {e}")
-        return -1
-
-    finally:
-        db.close()
 
 # 차량번호를 인자로 받아 해당 차량의 입출차 기록을 반환
 def fetch_parking_entry(car_number: str):
@@ -127,7 +124,7 @@ def fetch_parking_entry(car_number: str):
             log_list.append({
                 "ID" : row.id,
                 "입차시간": row.entry_time,
-                "주차장ID" : "DUMMY1"
+                "주차장ID" : "DUMMY1" # 하나의 주차장에 대한 여러 개의 log만 가진다고 가정 
             })
         return log_list
     except Exception as e:

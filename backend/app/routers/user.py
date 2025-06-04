@@ -39,7 +39,7 @@ def get_user_usages(
             Usage.exit_time,
             Usage.total_fee
         )
-        .join(Parking, Parking.id == Usage.parking_id)
+        .join(Parking, Parking.external_id == Usage.external_id)
         .filter(Usage.uid == current_user.uid)
         .order_by(Usage.entry_time.desc())
         .all()

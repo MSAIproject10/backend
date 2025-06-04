@@ -97,7 +97,7 @@ def run_update():
 
             occ = ParkingStatus(
                 parking_id=parking.id,
-                current_occupancy=occupancy,
+                current_occupancy=now_cnt,
                 last_updated= datetime.now(),
                 congestion_level = status_text,
                 entry_count=entry, 

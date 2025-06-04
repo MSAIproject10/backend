@@ -29,7 +29,7 @@ def get_detected_entry(
 ):
     vehicle = (
         db.query(Vehicle)
-        .filter(Vehicle.user_id == current_user.uid, Vehicle.default_type == True) # 현재 로그인된 uid 확인 & default인 차량 불러옴 
+        .filter(Vehicle.uid == current_user.uid, Vehicle.default_type == True) # 현재 로그인된 uid 확인 & default인 차량 불러옴 
         .first()
     )
     if not vehicle:
@@ -62,7 +62,7 @@ def confirm_usage_entry(
     new_usage = Usage(
         uid=current_user.uid,
         vehicle_id=detected.vehicle_id,
-        parking_id=detected.parking_id,
+        external_id=detected.parking_id,
         entry_time=detected.entry_time,
         log_id=detected.log_id,
         fee_status=False
@@ -70,7 +70,7 @@ def confirm_usage_entry(
     db.add(new_usage)
     db.commit()
     db.refresh(new_usage)
-    return {"message": "The entry record has been confirmed.", "usage_id": new_usage.id}
+    return {"message": "The entry record has been confirmed.", "usage_id": new_usage.usage_id}
 
 
 # 3. 출차 처리 확정 → Usage 완료 처리 + User 정보 갱신
