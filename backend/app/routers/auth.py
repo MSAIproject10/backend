@@ -80,7 +80,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(status_code=401, detail="Incorrect username or password") # 401 : Unauthroized
 
     access_token = create_access_token(data={"sub": user.username}) # access 토큰 생성 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "uid": user.uid}
 # {
 #   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
 #   "token_type": "bearer"
