@@ -10,6 +10,7 @@ from shared.db import get_db
 router = APIRouter()
 
 # Vehicle Create
+## TODO : Maximum 요청 create 안되도록 
 @router.post("/", response_model=VehicleResponse)
 def create_vehicle(
     data: VehicleCreate, 
@@ -55,7 +56,7 @@ def update_vehicle(
     for key, value in update_data.items():
         setattr(vehicle, key, value)
 
-    if data.default_type is True and not vehicle.default_type: # 기본 차량으로 설정하고자 하는 경우
+    if data.default_type is True: # 기본 차량으로 설정하고자 하는 경우
         db.query(Vehicle).filter(
             Vehicle.uid == current_user.uid,
             Vehicle.vehicle_id != vehicle_id
