@@ -9,7 +9,7 @@ load_dotenv()
 
 username = os.getenv('MYSQL_USERNAME')
 raw_password = os.getenv('MYSQL_PW')
-password = quote_plus(raw_password)
+password = quote_plus(str(raw_password))
 server = os.getenv('MYSQL_SERVER')
 
 database = os.getenv('MYSQL_DBNAME')
