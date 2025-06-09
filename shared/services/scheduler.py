@@ -9,8 +9,8 @@ def start_scheduler(): # 작업 스케쥴러를 초기화하는 함수
         run_collect()
 
     # schedule.every().day.at("09:00").do(job)  # KST 기준이면 Azure는 UTC이므로 "00:00"으로 조정 가능
-    schedule.every(5).minutes.do(job)
-    
+    schedule.every(60).minutes.do(job)
+
     def run_schedule_loop(): # 실행할 작업이 있는지 체크해서 실행(60초마다 반복)
         while True:
             schedule.run_pending()
