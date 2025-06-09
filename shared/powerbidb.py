@@ -90,10 +90,9 @@ def fetch_capacity(parking_log_id: int) -> int:
             # ).fetchone()
             result = db.execute(
                 text("""
-                    SELECT TOP 1
-                        CAST([남은주차면적수] AS INT) AS capacity
-                    FROM dbo.ParkingLog
-                    ORDER BY [입차시간] DESC
+                    SELECT 
+                        CAST([남은주차면수] AS INT) AS capacity
+                    FROM dbo.ParkingStatus
                 """)
             ).fetchone()
 

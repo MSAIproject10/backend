@@ -1,5 +1,4 @@
-# 사용자 단위로 책임이 나뉘는 경우 router로 나누기 
-# routers/user.py
+# routers/vehicles.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.app.models.schemas.user import User

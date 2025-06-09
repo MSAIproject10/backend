@@ -3,22 +3,22 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session, joinedload
 from backend.app.models.schemas.parking.parking import ParkingResponse, Parking
 from shared.db import get_db
-from shared.services.collector import run_collect
-from shared.services.updater import run_update
-import math
-import os
+import math, os
 from dotenv import load_dotenv
 load_dotenv()
-router = APIRouter()
 API_SECRET = os.getenv("API_SECRET_KEY") 
 
+router = APIRouter()
+
+# from shared.services.collector import run_collect
+# from shared.services.updater import run_update
 # @router.post("/sync")
 # def trigger_data_sync(request: Request):
 #     if request.headers.get("x-api-key") != API_SECRET:
 #         raise HTTPException(status_code=403, detail="Unauthorized")
 #     run_collect()
 #     return {"message": "Parking data sync completed."}
-
+# -------------DB stack을 API화했지만, 비활성화---------------
 # @router.post("/status")
 # def trigger_data_sync(request: Request):
 #     if request.headers.get("x-api-key") != API_SECRET:

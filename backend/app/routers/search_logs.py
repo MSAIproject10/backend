@@ -1,37 +1,12 @@
 from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from backend.app.models.schemas.parking.parking import ParkingResponse, Parking
 from backend.app.models.schemas.searchlog import SearchLog
 from backend.app.models.schemas.user import User
 from backend.app.routers.auth import get_current_user
 from shared.db import get_db
-from shared.services.collector import run_collect
-from shared.services.updater import run_update
-
-router = APIRouter()
-
-@router.get("/popular", response_model=List[str])
-def get_popular_keywords(limit: int = 10, db: Session = Depends(get_db)):
-    results = (
-        db.query(SearchLog.keyword, func.count(SearchLog.keyword).label("count"))
-        .group_by(SearchLog.keyword)
-        .order_by(func.count(SearchLog.keyword).desc())
-        .limit(limit)
-        .all()
-    )
-    return [r.keyword for r in results]
-
-from typing import List
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
-from backend.app.models.schemas.parking.parking import ParkingResponse, Parking
-from backend.app.models.schemas.searchlog import SearchLog
-from shared.db import get_db
-from shared.services.collector import run_collect
-from shared.services.updater import run_update
 
 router = APIRouter()
 
