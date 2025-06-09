@@ -7,7 +7,8 @@ from shared.services.collector import run_collect
 from shared.services.updater import run_update
 import math
 import os
-
+from dotenv import load_dotenv
+load_dotenv()
 router = APIRouter()
 API_SECRET = os.getenv("API_SECRET_KEY") 
 
@@ -22,7 +23,7 @@ def trigger_data_sync(request: Request):
 def trigger_data_sync(request: Request):
     if request.headers.get("x-api-key") != API_SECRET:
         raise HTTPException(status_code=403, detail="Unauthorized")
-    run_collect()
+    run_update()
     return {"message": "Parking data status completed."}
 
 # Haversine 공식으로 거리 계산(두 점의 구면 상 거리 계산)
