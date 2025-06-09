@@ -12,19 +12,19 @@ load_dotenv()
 router = APIRouter()
 API_SECRET = os.getenv("API_SECRET_KEY") 
 
-@router.post("/sync")
-def trigger_data_sync(request: Request):
-    if request.headers.get("x-api-key") != API_SECRET:
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    run_collect()
-    return {"message": "Parking data sync completed."}
+# @router.post("/sync")
+# def trigger_data_sync(request: Request):
+#     if request.headers.get("x-api-key") != API_SECRET:
+#         raise HTTPException(status_code=403, detail="Unauthorized")
+#     run_collect()
+#     return {"message": "Parking data sync completed."}
 
-@router.post("/status")
-def trigger_data_sync(request: Request):
-    if request.headers.get("x-api-key") != API_SECRET:
-        raise HTTPException(status_code=403, detail="Unauthorized")
-    run_update()
-    return {"message": "Parking data status completed."}
+# @router.post("/status")
+# def trigger_data_sync(request: Request):
+#     if request.headers.get("x-api-key") != API_SECRET:
+#         raise HTTPException(status_code=403, detail="Unauthorized")
+#     run_update()
+#     return {"message": "Parking data status completed."}
 
 # Haversine 공식으로 거리 계산(두 점의 구면 상 거리 계산)
 def haversine(lat1, lng1, lat2, lng2):
