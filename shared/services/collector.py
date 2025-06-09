@@ -1,6 +1,5 @@
 # shared/services/ingest.py
 import sys, os, logging
-from datetime import datetime
 import pandas as pd
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -27,7 +26,11 @@ def parse_pay_type(value: str) -> bool:
 
 # 엑셀파일입력으로 사설 주차장 등록(일반화)
 def insert_dummy_ocr_parking(db: Session):
-    csv_path='../file/private_parking.csv'
+    # csv_path='../file/private_parking.csv'
+    import os
+    print("현재 working directory:", os.getcwd())
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # 현재 collector.py 경로
+    csv_path = os.path.join(base_dir, "../file/private_parking.csv") # azure functions 경로에 맞추기 
     logger.info(f"CSV 파일에서 더미 주차장 데이터 로딩: {csv_path}")
     df = pd.read_csv(csv_path)
     for idx, row in df.iterrows():
@@ -78,93 +81,98 @@ def insert_dummy_ocr_parking(db: Session):
             logger.error("e")
 
 def run_collect():
-    logger.info("주차장 데이터 수집 시작")
-    db: Session = next(get_db())
+    try:
+        logger.info("주차장 데이터 수집 시작")
+        db: Session = next(get_db())
+        with db.begin():
+            # ---------- DELETE ----------
+            db.query(ParkingStatus).delete() # Parking Status는 참조 관계이므로 미리 삭제해야함
+            db.query(ParkingSchedulePolicy).delete()
+            db.query(ParkingFeePolicy).delete()
+            db.query(Parking).delete()
+            # db.commit()
+            logger.info("기존 parking 테이블 삭제 완료 ✅")
+            # ---------- Address CHANGE ----------
+            data_list = fetch_parking_info()
+            logger.info(f"OpenAPI로부터 {len(data_list)}건 데이터 수신 ✅")
 
-    db.query(ParkingStatus).delete() # Parking Status는 참조 관계이므로 미리 삭제해야함
-    db.query(ParkingSchedulePolicy).delete()
-    db.query(ParkingFeePolicy).delete()
-    db.query(Parking).delete()
-    db.commit()
-    logger.info("기존 parking 테이블 삭제 완료 ✅")
+            address_list = [item["ADDR"] for item in data_list]
+            geocode_results = {}
+            logger.info("주소 -> 위도/경도 변환")
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = {executor.submit(geocode_address, addr): addr for addr in address_list} # Future 객체 -> addr 매핑으로 구성
+                for future in as_completed(futures):
+                    try:
+                        addr, lat, lon = future.result()
+                        geocode_results[addr] = (lat, lon)
+                        logger.info(f"OpenAPI로부터 {lat, lon} ✅")
+                    except Exception as e:
+                        logger.warning(f"지오코딩 실패: {futures[future]} → {e}")
+            logger.info(f"OpenAPI로부터 변환 완료 ✅")
+            # ---------- INSERT ----------
+            for i, item in enumerate(data_list):
+                try:
+                    lat, lon = geocode_results.get(item["ADDR"], (None, None))  # 주소별 위경도 추출
+                    tel = item.get("TELNO")
+                    phone_number = tel if tel and str(tel).lower() != "nan" else ""
+                    is_provide_status = item.get("PRK_STTS_NM", "") == "현재~20분이내 연계데이터 존재(현재 주차대수 표현)"
+                    logger.info(f"DB 업데이트 시작 ✅")
+                    parking = Parking(
+                        external_id =item["PKLT_CD"],
+                        parking_name=item["PKLT_NM"],                   # 주차장 이름
+                        address=item["ADDR"],                           # 주소
+                        parking_type=item["PRK_TYPE_NM"],               # 주차장 유형 (ex.노외 주차장)
+                        phone_number=phone_number,                      # 전화번호
 
-    data_list = fetch_parking_info()
-    logger.info(f"OpenAPI로부터 {len(data_list)}건 데이터 수신 ✅")
+                        latitude=lat,                                   # 위도
+                        longitude=lon,                                  # 경도
+                        
+                        operation_type=item["OPER_SE_NM"],              # 운영 유형 (ex. 시간제 주차장)
+                        provide_status=is_provide_status,           # 현황 연계 여부(ex. 미연계중)
+                        total_capacity=int(float(item["TPKCT"])),        # 총 주차 가능 대수(float로 응답오기 때문에 float->int) 
+                        ocr_linked=False
+                    )
+                    db.add(parking)
+                    db.flush()  # 변경사항을 DB에 반영하지만, 트랜잭션은 커밋하지 않고 유지하는 함수(FK를 위해 parking_id 확보)
+                    logger.info(f"DB flush 직후 ✅")
+                    fee_policy = ParkingFeePolicy(
+                        parking_id=parking.id,
 
-    address_list = [item["ADDR"] for item in data_list]
-    geocode_results = {}
+                        monthly_fee=int(float(v)) if (v := item.get("PRD_AMT")) and not pd.isna(v) else -1, # NaN일 때 -1로 표기 
+                        base_fee=int(float(v)) if (v := item.get("BSC_PRK_CRG")) and not pd.isna(v) else -1,
+                        base_time_min=int(float(v)) if (v := item.get("BSC_PRK_HR")) and not pd.isna(v) else -1,
+                        extra_fee=int(float(v)) if (v := item.get("ADD_PRK_CRG")) and not pd.isna(v) else -1,
+                        extra_time_min=int(float(v)) if (v := item.get("ADD_PRK_HR")) and not pd.isna(v) else -1,
+                        daily_max_fee=int(float(v)) if (v := item.get("DAY_MAX_CRG")) and not pd.isna(v) else -1,
 
-    logger.info("주소 -> 위도/경도 변환")
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {executor.submit(geocode_address, addr): addr for addr in address_list} # Future 객체 -> addr 매핑으로 구성
-        for future in as_completed(futures):
-            try:
-                addr, lat, lon = future.result()
-                geocode_results[addr] = (lat, lon)
-            except Exception as e:
-                logger.warning(f"지오코딩 실패: {futures[future]} → {e}")
+                        weekday_pay_type=parse_pay_type(item.get("PAY_YN_NM")),
+                        saturday_pay_type=parse_pay_type(item.get("SAT_CHGD_FREE_NM")),
+                        holiday_pay_type=parse_pay_type(item.get("LHLDY_CHGD_FREE_SE_NAME")),
+                    )
+                    db.add(fee_policy)
+                    logger.info(f"DB policy 업데이트 직후 ✅")
+                    schedule_policy = ParkingSchedulePolicy(
+                        parking_id=parking.id,
 
-    for i, item in enumerate(data_list):
-        try:
-            lat, lon = geocode_results.get(item["ADDR"], (None, None))  # 주소별 위경도 추출
+                        weekday_open=normalize_time(item.get("WD_OPER_BGNG_TM", 0)),
+                        weekday_close=normalize_time(item.get("WD_OPER_END_TM", 2400)),
 
-            tel = item.get("TELNO")
-            phone_number = tel if tel and str(tel).lower() != "nan" else ""
-            is_provide_status = item.get("PRK_STTS_NM", "") == "현재~20분이내 연계데이터 존재(현재 주차대수 표현)"
+                        weekend_open=normalize_time(item.get("WE_OPER_BGNG_TM", 0)),
+                        weekend_close=normalize_time(item.get("WE_OPER_END_TM", 2400)),
 
-            parking = Parking(
-                external_id =item["PKLT_CD"],
-                parking_name=item["PKLT_NM"],                   # 주차장 이름
-                address=item["ADDR"],                           # 주소
-                parking_type=item["PRK_TYPE_NM"],               # 주차장 유형 (ex.노외 주차장)
-                phone_number=phone_number,                      # 전화번호
-
-                latitude=lat,                                   # 위도
-                longitude=lon,                                  # 경도
-                
-                operation_type=item["OPER_SE_NM"],              # 운영 유형 (ex. 시간제 주차장)
-                provide_status=is_provide_status,           # 현황 연계 여부(ex. 미연계중)
-                total_capacity=int(float(item["TPKCT"])),        # 총 주차 가능 대수(float로 응답오기 때문에 float->int) 
-                ocr_linked=False
-            )
-            db.add(parking)
-            db.flush()  # 변경사항을 DB에 반영하지만, 트랜잭션은 커밋하지 않고 유지하는 함수(FK를 위해 parking_id 확보)
-
-            fee_policy = ParkingFeePolicy(
-                parking_id=parking.id,
-
-                monthly_fee=int(float(v)) if (v := item.get("PRD_AMT")) and not pd.isna(v) else -1, # NaN일 때 -1로 표기 
-                base_fee=int(float(v)) if (v := item.get("BSC_PRK_CRG")) and not pd.isna(v) else -1,
-                base_time_min=int(float(v)) if (v := item.get("BSC_PRK_HR")) and not pd.isna(v) else -1,
-                extra_fee=int(float(v)) if (v := item.get("ADD_PRK_CRG")) and not pd.isna(v) else -1,
-                extra_time_min=int(float(v)) if (v := item.get("ADD_PRK_HR")) and not pd.isna(v) else -1,
-                daily_max_fee=int(float(v)) if (v := item.get("DAY_MAX_CRG")) and not pd.isna(v) else -1,
-
-                weekday_pay_type=parse_pay_type(item.get("PAY_YN_NM")),
-                saturday_pay_type=parse_pay_type(item.get("SAT_CHGD_FREE_NM")),
-                holiday_pay_type=parse_pay_type(item.get("LHLDY_CHGD_FREE_SE_NAME")),
-            )
-            db.add(fee_policy)
-
-            schedule_policy = ParkingSchedulePolicy(
-                parking_id=parking.id,
-
-                weekday_open=normalize_time(item.get("WD_OPER_BGNG_TM", 0)),
-                weekday_close=normalize_time(item.get("WD_OPER_END_TM", 2400)),
-
-                weekend_open=normalize_time(item.get("WE_OPER_BGNG_TM", 0)),
-                weekend_close=normalize_time(item.get("WE_OPER_END_TM", 2400)),
-
-                holiday_open=normalize_time(item.get("LHLDY_OPER_BGNG_TM", 0)),
-                holiday_close=normalize_time(item.get("LHLDY_OPER_END_TM", 2400)),
-            )
-            db.add(schedule_policy)
-            logger.info(f"[{i + 1}/{len(data_list)}] '{parking.parking_name}' 주차장 등록 완료 ✅")
-        except Exception as e:
-            logger.error(f"[{i + 1}] 에러 발생: {e}", exc_info=True)
-    logger.info("차량 탐지 시스템용 더미 데이터 추가 ✅")
-    insert_dummy_ocr_parking(db)
-    db.commit()
-    logger.info("주차장 데이터 커밋 완료 ✅")
+                        holiday_open=normalize_time(item.get("LHLDY_OPER_BGNG_TM", 0)),
+                        holiday_close=normalize_time(item.get("LHLDY_OPER_END_TM", 2400)),
+                    )
+                    db.add(schedule_policy)
+                    logger.info(f"DB schedule 업데이트 직후 ✅")
+                    logger.info(f"[{i + 1}/{len(data_list)}] '{parking.parking_name}' 주차장 등록 완료 ✅")
+                except Exception as e:
+                    logger.error(f"[{i + 1}] 에러 발생: {e}", exc_info=True)
+            logger.info("차량 탐지 시스템용 더미 데이터 추가 ✅")
+            insert_dummy_ocr_parking(db)
+        # db.commit()
+        logger.info("주차장 데이터 커밋 완료 ✅")
+    except Exception as e:
+        logger.error(f"run_collect 내부 예외 발생: {e}", exc_info=True)
 
 # run_collect()
