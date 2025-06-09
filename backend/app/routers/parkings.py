@@ -1,23 +1,29 @@
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session, joinedload
 from backend.app.models.schemas.parking.parking import ParkingResponse, Parking
 from shared.db import get_db
 from shared.services.collector import run_collect
 from shared.services.updater import run_update
 import math
+import os
 
 router = APIRouter()
+API_SECRET = os.getenv("API_SECRET_KEY") 
 
-@router.post("/sync", status_code=200)
-def trigger_data_sync():
+@router.post("/sync")
+def trigger_data_sync(request: Request):
+    if request.headers.get("x-api-key") != API_SECRET:
+        raise HTTPException(status_code=403, detail="Unauthorized")
     run_collect()
     return {"message": "Parking data sync completed."}
 
-@router.post("/status", status_code=200)
-def trigger_status_update():
-    run_update()
-    return {"message": "Parking status update completed."}
+@router.post("/status")
+def trigger_data_sync(request: Request):
+    if request.headers.get("x-api-key") != API_SECRET:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    run_collect()
+    return {"message": "Parking data status completed."}
 
 # Haversine 공식으로 거리 계산(두 점의 구면 상 거리 계산)
 def haversine(lat1, lng1, lat2, lng2):
