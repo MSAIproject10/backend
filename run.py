@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 from backend.app.routers import auth, parkings, search_logs, usages, vehicles, user
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+origins = [
+    "http://localhost:8080",           # Flutter Web 개발 서버
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,             # 허용할 출처 목록
+    allow_credentials=True,
+    allow_methods=["*"],               # 허용할 HTTP 메서드 (GET, POST 등)
+    allow_headers=["*"],               # 허용할 요청 헤더
+)
 
 @app.get("/")
 def read_root():
