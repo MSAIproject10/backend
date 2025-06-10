@@ -138,7 +138,7 @@ def fetch_parking_exit(log_id: int):
         result = db.execute(text("""
             SELECT 
                 [출차시간] AS exit_time,
-                [총정산요금] AS total_fee,
+                [실시간요금] AS total_fee,
                 [정산상태] AS payment_status
             FROM dbo.ParkingLog
             WHERE [ID] = :log_id
